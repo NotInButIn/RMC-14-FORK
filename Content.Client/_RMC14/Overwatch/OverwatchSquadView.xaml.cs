@@ -8,6 +8,7 @@ using Robust.Client.UserInterface.Controls;
 using Robust.Client.UserInterface.XAML;
 using Robust.Shared.Input;
 using Robust.Shared.Timing;
+using Robust.Shared.Localization;
 using static Robust.Client.UserInterface.Controls.BaseButton;
 
 namespace Content.Client._RMC14.Overwatch;
@@ -15,6 +16,8 @@ namespace Content.Client._RMC14.Overwatch;
 [GenerateTypedNameReferences]
 public sealed partial class OverwatchSquadView : Control
 {
+    [Dependency] private readonly ILocalizationManager _loc = default!;
+    
     public event Action? OnStop;
     public readonly FloatSpinBox Longitude;
     public readonly FloatSpinBox Latitude;
@@ -29,6 +32,7 @@ public sealed partial class OverwatchSquadView : Control
 
     public OverwatchSquadView()
     {
+        IoCManager.InjectDependencies(this);
         RobustXamlLoader.Load(this);
 
         // Set up tab button event handlers
@@ -107,7 +111,9 @@ public sealed partial class OverwatchSquadView : Control
     {
         _squadInfoHidden = !_squadInfoHidden;
         ApplySquadInfoVisibilityState();
-        HideSquadInfoButton.Text = _squadInfoHidden ? "Show Squad Info" : "Hide Squad Info";
+        HideSquadInfoButton.Text = _squadInfoHidden 
+            ? _loc.GetString("rmc-overwatch-show-squad-info") 
+            : _loc.GetString("rmc-overwatch-hide-squad-info");
     }
 
     private void MakeAllVisible(Control control)
@@ -275,14 +281,15 @@ public sealed partial class OverwatchSquadView : Control
         base.FrameUpdate(args);
 
         CrateStatus.Text = HasCrate
-            ? "[color=green][bold] \\[ CRATE LOADED \\][/bold][/color]"
-            : "[color=red][bold] \\[ NO CRATE LOADED \\][/bold][/color]";
+            ? _loc.GetString("rmc-overwatch-crate-status-loaded")
+            : _loc.GetString("rmc-overwatch-crate-status-no-crate");
 
         var time = IoCManager.Resolve<IGameTiming>().CurTime;
         var supplyTimeLeft = NextLaunchAt - time;
         if (supplyTimeLeft > TimeSpan.Zero)
         {
-            CrateStatus.Text = $"[color=#D3B400][bold]\\ [ COOLDOWN - {(int)supplyTimeLeft.TotalSeconds} SECONDS \\][/bold][/color]";
+            CrateStatus.Text = _loc.GetString("rmc-overwatch-crate-status-cooldown", 
+                ("seconds", (int)supplyTimeLeft.TotalSeconds));
             LaunchButton.Disabled = true;
         }
         else
@@ -293,14 +300,15 @@ public sealed partial class OverwatchSquadView : Control
         var orbitalTimeLeft = NextOrbitalAt - time;
         if (orbitalTimeLeft > TimeSpan.Zero)
         {
-            OrbitalStatus.Text = $"[color=#D3B400][bold]\\ [ COOLDOWN - {(int)orbitalTimeLeft.TotalSeconds} SECONDS \\][/bold][/color]";
+            OrbitalStatus.Text = _loc.GetString("rmc-overwatch-orbital-status-cooldown",
+                ("seconds", (int)orbitalTimeLeft.TotalSeconds));
             OrbitalFireButton.Disabled = true;
         }
         else
         {
             OrbitalStatus.Text = HasOrbital
-                ? "[color=green][bold] \\[ READY \\][/bold][/color]"
-                : "[color=red][bold] \\[ NOT READY \\][/bold][/color]";
+                ? _loc.GetString("rmc-overwatch-orbital-status-ready")
+                : _loc.GetString("rmc-overwatch-orbital-status-not-ready");
             OrbitalFireButton.Disabled = false;
         }
     }
